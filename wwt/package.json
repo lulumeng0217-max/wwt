@@ -1,0 +1,31 @@
+{
+  "name": "wwt",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "dev:au": "cp .env.au.dev .env && nuxt dev",
+    "dev:uk": "cp .env.uk.dev .env && nuxt dev",
+    "build:au:dev": "cp .env.au.dev .env && nuxt build",
+    "build:uk:dev": "cp .env.uk.dev .env && nuxt build",
+    "build:au:prod": "cp .env.au.product .env && nuxt build",
+    "build:uk:prod": "cp .env.uk.product .env && nuxt build"
+  },
+  "dependencies": {
+    "@vueuse/core": "^14.1.0",
+    "@vueuse/nuxt": "^14.1.0",
+    "nuxt": "^4.2.2",
+    "vue": "^3.5.27",
+    "vue-router": "^4.6.4"
+  },
+  "packageManager": "pnpm@10.28.1+sha512.7d7dbbca9e99447b7c3bf7a73286afaaf6be99251eb9498baefa7d406892f67b879adb3a1d7e687fc4ccc1a388c7175fbaae567a26ab44d1067b54fcb0d6a316",
+  "devDependencies": {
+    "@nuxt/icon": "2.2.1",
+    "@unocss/nuxt": "^66.6.0",
+    "unocss": "^66.6.0"
+  }
+}
