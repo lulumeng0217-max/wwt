@@ -1,18 +1,8 @@
 <!-- Nuxt项目: pages/preview.vue -->
 <template>
    <div class="page-renderer">
-    <template v-for="block in pageData.blocks" :key="block.id">
-      <!-- 核心逻辑：动态组件渲染 -->
-      <component 
-        :is="resolveCmsComponent(block.component)" 
-        v-bind="block.props"
-        v-if="resolveCmsComponent(block.component)"
-      />
-      <!-- 开发环境调试用：如果找不到组件 -->
-      <div v-else class="p-4 bg-red-100 text-red-600 border border-red-400 text-center">
-        [Error: Component "{{ block.component }}" not found]
-      </div>
-    </template>
+     <CmsRenderer :Comp="pageData.blocks" />
+ 
   </div>
 </template>
 

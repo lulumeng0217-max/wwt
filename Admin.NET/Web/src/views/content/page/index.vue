@@ -34,10 +34,12 @@
 									<span class="node-label" :title="data.requestPath">{{ node.label }}</span>
 								</div>
 								<!-- 状态指示点 -->
-								<el-tooltip :content="data.status === 1 ? 'Enabled' : 'Disabled'" placement="right"
+
+								<el-button type="primary" link @click="EditPage(data.id)">Edit</el-button>
+								<!-- <el-tooltip :content="data.status === 1 ? 'Enabled' : 'Disabled'" placement="right"
 									:show-after="500">
 									<span class="status-dot" :class="{ online: data.status === 1 }"></span>
-								</el-tooltip>
+								</el-tooltip> -->
 							</div>
 						</template>
 					</el-tree>
@@ -128,59 +130,42 @@
 					<div class="panel-body">
 						<div v-if="previewBlocks.length === 0" class="empty-state">
 							<el-empty description="No components" :image-size="60">
-								<el-button type="primary" plain size="small" @click="openComponentDrawer('0')">Add Root Component</el-button>
+								<el-button type="primary" plain size="small" @click="openComponentDrawer('0')">Add Root
+									Component</el-button>
 							</el-empty>
 						</div>
 
 						<el-scrollbar v-else>
-							<el-tree
-								:data="componentTreeDisplay"
-								node-key="id"
-								default-expand-all
-								draggable
-								:allow-drop="allowDrop"
-								:allow-drag="allowDrag"
-								@node-drop="handleDrop"
-								:props="{ label: 'label', children: 'children' }"
-								class="structure-tree"
-                                :expand-on-click-node="false"
-							>
+							<el-tree :data="componentTreeDisplay" node-key="id" default-expand-all draggable
+								:allow-drop="allowDrop" :allow-drag="allowDrag" @node-drop="handleDrop"
+								:props="{ label: 'label', children: 'children' }" class="structure-tree"
+								:expand-on-click-node="false">
 								<template #default="{ node, data }">
 									<div class="custom-tree-node">
-                                        <!-- 左侧：图标 + 名称 -->
+										<!-- 左侧：图标 + 名称 -->
 										<div class="node-content">
-                                            <!-- 根据类型显示不同颜色的图标 -->
+											<!-- 根据类型显示不同颜色的图标 -->
 											<el-icon class="node-icon" :class="getKindClass(data.kind)">
 												<component :is="data.icon || 'Box'" />
 											</el-icon>
 											<span class="node-label">{{ node.label }}</span>
-                                            <el-tag v-if="data.isNew" size="small" type="success" effect="plain" class="mini-tag">New</el-tag>
+											<el-tag v-if="data.isNew" size="small" type="success" effect="plain"
+												class="mini-tag">New</el-tag>
 										</div>
 
-                                        <!-- 右侧：操作按钮 (悬停显示) -->
+										<!-- 右侧：操作按钮 (悬停显示) -->
 										<div class="node-actions">
-                                            <!-- 只有容器(Kind=10)或特殊布局才能添加子级 -->
-                                            <!-- 注意：你需要确保你的 data 里包含 kind 属性 -->
-											<el-button 
-                                                v-if="isContainer(data)"
-                                                link 
-                                                type="primary" 
-                                                size="small" 
-                                                @click.stop="handleAppend(data)"
-                                                title="Append Child"
-                                            >
-                                                Append
-                                            </el-button>
-                                            
-											<el-button 
-                                                link 
-                                                type="danger" 
-                                                size="small" 
-                                                @click.stop="removeComponent(data.id)"
-                                                title="Delete"
-                                            >
-                                                Delete
-                                            </el-button>
+											<!-- 只有容器(Kind=10)或特殊布局才能添加子级 -->
+											<!-- 注意：你需要确保你的 data 里包含 kind 属性 -->
+											<el-button v-if="isContainer(data)" link type="primary" size="small"
+												@click.stop="handleAppend(data)" title="Append Child">
+												Append
+											</el-button>
+
+											<el-button link type="danger" size="small"
+												@click.stop="removeComponent(data.id)" title="Delete">
+												Delete
+											</el-button>
 										</div>
 									</div>
 								</template>
@@ -235,6 +220,16 @@
 								</el-col>
 
 								<el-col :xs="12" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
+									<el-form-item label="pagetype" prop="pagetype">
+										<el-select v-model="formData.pagetype" placeholder="Select Page Type"
+											class="w-100">
+											<el-option label="Standard Page" value="page" />
+											<el-option label="Template" value="template" />
+										</el-select>
+									</el-form-item>
+								</el-col>
+
+								<el-col :xs="12" :sm="12" :md="12" :lg="12" :xl="12" class="mb20">
 									<el-form-item label="Content" prop="sourceType">
 										<el-radio-group v-model="sourceType">
 											<el-radio-button label="empty">Blank Page</el-radio-button>
@@ -246,7 +241,7 @@
 								<el-col :span="24" v-if="sourceType === 'template'">
 									<div class="tpl-select-box">
 										<el-form-item label="Template" style="margin-bottom: 0;">
-											<el-select v-model="selectedTemplateId" placeholder="Select a template"
+											<el-select v-model="formData.templateId" placeholder="Select a template"
 												class="w-100">
 												<el-option v-for="t in templateList" :key="t.id" :label="t.title"
 													:value="t.id" />
@@ -317,7 +312,7 @@
 		<el-drawer v-model="componentDrawerVisible" title="Add Component" direction="rtl" size="420px"
 			class="component-drawer" destroy-on-close>
 			<div class="drawer-layout">
-	
+
 				<el-divider class="custom-divider" />
 				<!-- 组件列表区域 -->
 				<el-scrollbar class="component-scroll">
@@ -340,7 +335,9 @@
 										getComponentStyle(comp.componentKind).label }}</el-tag>
 								</div>
 								<!-- 使用 stripHtml 清洗描述 -->
-								<p class="comp-desc">{{ stripHtml(comp.description||'') || 'No description available' }}</p>
+								<p class="comp-desc">{{ stripHtml(comp.description || '') || 'No description available'
+									}}
+								</p>
 							</div>
 
 							<!-- 右侧加号 -->
@@ -362,7 +359,7 @@ import type { FormInstance, FormRules } from 'element-plus';
 import { ElMessage, ElTree } from 'element-plus';
 import { getAPI } from '/@/utils/axios-utils';
 import { CmsComponentTypeApi, CmsComponentApi, CmsPageApi } from '/@/api-services';
-import { CmsComponentDto, CmsPageOutput, AddCmsPageInput, CmsComponentTypeOutput, AddCmsComponentInput,ComponentKindEnum } from '/@/api-services/models';
+import { CmsComponentDto, CmsPageOutput, AddCmsPageInput, CmsComponentTypeOutput, AddCmsComponentInput, ComponentKindEnum } from '/@/api-services/models';
 import { nanoid } from 'nanoid'
 import { id } from 'element-plus/es/locale';
 // ---------------- 接口扩展 ----------------
@@ -411,7 +408,7 @@ const activeTab = ref('basic');
 const sourceType = ref<'empty' | 'template'>('empty');
 const selectedTemplateId = ref<number | undefined>(undefined);
 const formData = reactive<AddCmsPageInput & { pid?: number }>({
-	pid: 0,
+	pid: undefined,
 	title: '',
 	requestPath: '',
 	subTitle: '',
@@ -472,10 +469,10 @@ const componentTreeDisplay = computed(() => {
 });
 
 // 获取抽屉选择数据
-const getComponentTypeList=async ()=>{
-	const res=await getAPI(CmsComponentTypeApi).apiCmsComponentTypePagePost({page:1,pageSize:999});
-	state.drawComponentTypes= res.data.result?.items||[];
-	return res.data.result?.items||[];
+const getComponentTypeList = async () => {
+	const res = await getAPI(CmsComponentTypeApi).apiCmsComponentTypePagePost({ page: 1, pageSize: 999 });
+	state.drawComponentTypes = res.data.result?.items || [];
+	return res.data.result?.items || [];
 };
 
 const hasChanges = computed(() => {
@@ -487,7 +484,7 @@ const templateList = computed(() => state.pageList.filter((p) => p.pagetype === 
 // ---------------- 方法实现 ----------------
 
 // 通用：列表转树
-function listToTree<T extends { id?: number|string; pid?: number|string; children?: T[] }>(list: T[]): T[] {
+function listToTree<T extends { id?: number | string; pid?: number | string; children?: T[] }>(list: T[]): T[] {
 	const map: Record<string, T> = {};
 	const node: T[] = [];
 	const roots: T[] = [];
@@ -567,13 +564,31 @@ const openCreateDialog = () => {
 	dialogVisible.value = true;
 };
 
+const EditPage = async (id: number) => {
+	formRef.value?.resetFields();
+	sourceType.value = 'empty';
+	selectedTemplateId.value = undefined;
+	//get page data
+	const res = await getAPI(CmsPageApi).apiCmsPageDetailGet(id);
+	if (res.data.result?.templateId != undefined && res.data.result?.templateId != 0) {
+		sourceType.value = 'template';
+	}
+	Object.assign(formData, res.data.result);
+	dialogVisible.value = true;
+}
+
 const submitCreate = async () => {
 	if (!formRef.value) return;
 	await formRef.value.validate(async (valid) => {
 		if (valid) {
 			try {
+				let res:any = null;
 				// 调用 API
-				const res = await getAPI(CmsPageApi).apiCmsPageAddPost(formData);
+				if (formData.id) {
+					res = await getAPI(CmsPageApi).apiCmsPageUpdatePost(formData);
+				} else {
+					res = await getAPI(CmsPageApi).apiCmsPageAddPost(formData);
+				}
 				ElMessage.success('Page created');
 				dialogVisible.value = false;
 
@@ -628,8 +643,8 @@ const parseProps = (str: string | null | undefined) => {
 // 4. 修改原本的打开抽屉方法 (顶部的大按钮)
 // 如果没传参数，默认添加到根 (0)
 const openComponentDrawer = (parentId: string = '0') => {
-    targetParentId.value = "0";
-    componentDrawerVisible.value = true;
+	targetParentId.value = "0";
+	componentDrawerVisible.value = true;
 };
 
 const addComponent = (type: CmsComponentTypeOutput) => {
@@ -640,7 +655,7 @@ const addComponent = (type: CmsComponentTypeOutput) => {
 		pid: targetParentId.value, // 核心：使用选择的父ID
 		props: parseProps(type.defaultProps),
 		sortOrder: previewBlocks.value.length + 10,
-		componentKind: type.componentKind|| ComponentKindEnum.NUMBER_30,
+		componentKind: type.componentKind || ComponentKindEnum.NUMBER_30,
 		isNew: true,
 		isDeleted: false,
 		isModified: false,
@@ -684,49 +699,65 @@ const previewIframe = ref<HTMLIFrameElement>();
 const onIframeLoad = () => {
 	sendPreviewToIframe();
 };
+
+export interface CMSComponentBlock {
+	id: string;
+	type: "GlobalAlertBar" | "TextFeatureSection" | "OffersSection" | string; // 扩展为 string 以兼容未来新组件
+	sort_order: number;
+	is_visible: boolean;
+	// UnoCSS 类名字符串 (e.g. "mt-4 hidden md:flex")
+	class?: string;
+
+	// 业务参数 & 布局参数
+	props: Record<string, any>;
+	// 内联样式字符串 (e.g. "border: 1px solid red;")
+	styles?: Record<string, any>;
+	children?: CMSComponentBlock[];
+}
 // 修改 sendPreviewToIframe 方法
 const sendPreviewToIframe = () => {
-    const iframe = previewIframe.value;
-    if (!iframe?.contentWindow || !currentPreviewPage.value) return;
+	const iframe = previewIframe.value;
+	if (!iframe?.contentWindow || !currentPreviewPage.value) return;
 
-    // 1. 准备数据
-    const activeBlocks = previewBlocks.value.filter(b => !b.isDeleted);
-    
-    // 2. 组装消息对象
-    // 注意：这里我们构建一个干净的对象，不直接传 Vue 的 ref
-    const messageData = {
-        pageInfo: {
-            id: currentPreviewPage.value.id,
-            requestPath: currentPreviewPage.value.requestPath,
-            title: currentPreviewPage.value.title,
-            subTitle: currentPreviewPage.value.subTitle
-        },
-        blocks: activeBlocks.map(b => ({
-            id: b.id,
-            originalId: b.originalId,
-            pid: b.pid, // 确保传了 PID
-            component: b.component,
-            // 重点：props 里面可能包含 Vue 响应式数据，需要解包
-            props: b.props, 
-            sortOrder: b.sortOrder,
-            kind: b.componentKind // 确保传了 kind
-        }))
-    };
+	// 1. 准备数据
+	const activeBlocks = previewBlocks.value.filter(b => !b.isDeleted);
 
-    // 3. 【核心修复】使用 JSON 序列化再反序列化，彻底去除 Vue Proxy 和不可克隆对象
-    // 这一步会移除所有函数、Symbol 和 Vue 的内部引用，只保留纯数据
-    const cleanData = JSON.parse(JSON.stringify(messageData));
+	// 2. 组装消息对象
+	// 注意：这里我们构建一个干净的对象，不直接传 Vue 的 ref
+	const messageData = {
+		pageInfo: {
+			id: currentPreviewPage.value.id,
+			requestPath: currentPreviewPage.value.requestPath,
+			title: currentPreviewPage.value.title,
+			subTitle: currentPreviewPage.value.subTitle
+		},
+		blocks: activeBlocks.map(b => {
+			// id: b.id,
+			// originalId: b.originalId,
+			// pid: b.pid, // 确保传了 PID
+			// component: b.component,
+			// // 重点：props 里面可能包含 Vue 响应式数据，需要解包
+			// props: b.props,
+			// sortOrder: b.sortOrder,
+			// kind: b.componentKind // 确保传了 kind
+		})
+	};
 
-    console.log('Sending clean data:', cleanData);
+	// 3. 【核心修复】使用 JSON 序列化再反序列化，彻底去除 Vue Proxy 和不可克隆对象
+	// 这一步会移除所有函数、Symbol 和 Vue 的内部引用，只保留纯数据
+	const cleanData = JSON.parse(JSON.stringify(messageData));
 
-    iframe.contentWindow.postMessage(
-        {
-            type: 'CMS_PREVIEW_UPDATE',
-            data: cleanData, // 发送清洗后的数据
-        },
-        '*'
-    );
+	console.log('Sending clean data:', cleanData);
+
+	iframe.contentWindow.postMessage(
+		{
+			type: 'CMS_PREVIEW_UPDATE',
+			data: cleanData, // 发送清洗后的数据
+		},
+		'*'
+	);
 };
+
 const onIframeMessage = (e: MessageEvent) => {
 	if (e.data?.type === 'CMS_PREVIEW_READY') sendPreviewToIframe();
 };
@@ -734,41 +765,41 @@ const onIframeMessage = (e: MessageEvent) => {
 // 保存
 const saveComponents = async () => {
 	if (!currentPreviewPage.value) return;
-    isSaving.value = true;
-    try {
-        const newBlocks = previewBlocks.value.filter(b => b.isNew && !b.isDeleted);
+	isSaving.value = true;
+	try {
+		const newBlocks = previewBlocks.value.filter(b => b.isNew && !b.isDeleted);
 
-        if (newBlocks.length > 0) {
-            // 构造 componentList 数组
-            const componentList = newBlocks.map(b => ({
+		if (newBlocks.length > 0) {
+			// 构造 componentList 数组
+			const componentList = newBlocks.map(b => ({
 				id: b.id, // 如果有原始 ID 则传递
-                componentTypeId: b.componentTypeId,
-                pid:  b.pid , // 确保 PID 是数字
-                props: JSON.stringify(b.props), // 序列化 props
+				componentTypeId: b.componentTypeId,
+				pid: b.pid, // 确保 PID 是数字
+				props: JSON.stringify(b.props), // 序列化 props
 				styles: JSON.stringify(b.styles || {}), // 序列化 styles
-                sortOrder: b.sortOrder,
-                isVisible: true,
-            }));
+				sortOrder: b.sortOrder,
+				isVisible: true,
+			}));
 
-            const batchInput = {
-                pageId: currentPreviewPage.value!.id,
-                componentList: componentList
-            };
+			const batchInput = {
+				pageId: currentPreviewPage.value!.id,
+				componentList: componentList
+			};
 
-            // 发送请求
-            await getAPI(CmsComponentApi).apiWWTCMSCmsComponentBatchAddPost(batchInput);
-        }
+			// 发送请求
+			await getAPI(CmsComponentApi).apiWWTCMSCmsComponentBatchAddPost(batchInput);
+		}
 
-        ElMessage.success('Saved successfully');
-        // 3. 刷新页面数据，重新获取 ID
-        await handlePageSelect(currentPreviewPage.value);
+		ElMessage.success('Saved successfully');
+		// 3. 刷新页面数据，重新获取 ID
+		await handlePageSelect(currentPreviewPage.value);
 
-    } catch (e) {
-        ElMessage.error('Save failed');
-        console.error(e);
-    } finally {
-        isSaving.value = false;
-    }
+	} catch (e) {
+		ElMessage.error('Save failed');
+		console.error(e);
+	} finally {
+		isSaving.value = false;
+	}
 };
 // ---------------- 新增/修改的工具函数 ----------------
 
@@ -799,29 +830,29 @@ const getComponentStyle = (kind?: number) => {
 // 1. 判断是否为容器 (决定是否显示 Append 按钮)
 //  Kind: 10=Container, 20=Layout, 30=Content
 const isContainer = (data: any) => {
-    // 从 previewBlocks 查找该组件的详细信息以获取 kind
-    const block = previewBlocks.value.find(b => b.id === data.id);
-    if (block && block.componentKind === ComponentKindEnum.NUMBER_10) return true; // Container
-    
-    return false; 
+	// 从 previewBlocks 查找该组件的详细信息以获取 kind
+	const block = previewBlocks.value.find(b => b.id === data.id);
+	if (block && block.componentKind === ComponentKindEnum.NUMBER_10) return true; // Container
+
+	return false;
 };
 
 // 2. 获取图标颜色样式类
 const getKindClass = (kind?: number) => {
-    if (kind === 10) return 'icon-container';
-    if (kind === 20) return 'icon-layout';
-    return 'icon-content';
+	if (kind === 10) return 'icon-container';
+	if (kind === 20) return 'icon-layout';
+	return 'icon-content';
 };
 
 // 3. 点击节点上的 "Append"
 const handleAppend = (data: any) => {
-    // if (!data.originalId && data.originalId !== 0) {
-    //     ElMessage.warning('Please save the page before adding children to this new component.');
-    //     return;
-    // }
+	// if (!data.originalId && data.originalId !== 0) {
+	//     ElMessage.warning('Please save the page before adding children to this new component.');
+	//     return;
+	// }
 	console.log('Appending to component:', data);
-    targetParentId.value = data.id;
-    componentDrawerVisible.value = true;
+	targetParentId.value = data.id;
+	componentDrawerVisible.value = true;
 };
 
 
@@ -1191,242 +1222,284 @@ $primary-color: #409eff;
 /* --- 优化后的添加组件抽屉样式 --- */
 
 .drawer-layout {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    padding: 0 5px;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	padding: 0 5px;
 }
 
 /* 顶部选择区 */
 .target-section {
-    margin-bottom: 10px;
-    
-    .section-label {
-        display: block;
-        font-size: 14px;
-        font-weight: 600;
-        color: #303133;
-        margin-bottom: 8px;
-    }
-    
-    .container-select {
-        :deep(.el-input__wrapper) {
-            box-shadow: 0 0 0 1px #dcdfe6 inset;
-            &:hover { box-shadow: 0 0 0 1px #409eff inset; }
-        }
-    }
-    
-    .hint-text {
-        font-size: 12px;
-        color: #909399;
-        margin-top: 6px;
-    }
+	margin-bottom: 10px;
+
+	.section-label {
+		display: block;
+		font-size: 14px;
+		font-weight: 600;
+		color: #303133;
+		margin-bottom: 8px;
+	}
+
+	.container-select {
+		:deep(.el-input__wrapper) {
+			box-shadow: 0 0 0 1px #dcdfe6 inset;
+
+			&:hover {
+				box-shadow: 0 0 0 1px #409eff inset;
+			}
+		}
+	}
+
+	.hint-text {
+		font-size: 12px;
+		color: #909399;
+		margin-top: 6px;
+	}
 }
 
 .custom-divider {
-    margin: 15px 0;
-    border-top: 1px solid #f0f0f0;
+	margin: 15px 0;
+	border-top: 1px solid #f0f0f0;
 }
 
 /* 树选择下拉项样式 */
 .select-option-item {
-    display: flex;
-    align-items: center;
-    font-size: 13px;
-    
-    .mr-1 { margin-right: 6px; color: #909399; }
-    .id-tag { margin-left: auto; color: #c0c4cc; font-size: 11px; }
+	display: flex;
+	align-items: center;
+	font-size: 13px;
+
+	.mr-1 {
+		margin-right: 6px;
+		color: #909399;
+	}
+
+	.id-tag {
+		margin-left: auto;
+		color: #c0c4cc;
+		font-size: 11px;
+	}
 }
 
 /* 组件列表 */
 .component-scroll {
-    flex: 1;
+	flex: 1;
 }
 
 .component-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding-bottom: 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding-bottom: 20px;
 }
 
 /* 组件卡片 */
 .comp-card {
-    display: flex;
-    align-items: center;
-    padding: 16px;
-    background: #fff;
-    border: 1px solid #ebeef5;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
-    position: relative;
-    overflow: hidden;
+	display: flex;
+	align-items: center;
+	padding: 16px;
+	background: #fff;
+	border: 1px solid #ebeef5;
+	border-radius: 12px;
+	cursor: pointer;
+	transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+	position: relative;
+	overflow: hidden;
 
-    /* 悬停效果 */
-    &:hover {
-        border-color: #b3d8ff;
-        transform: translateY(-2px);
-        box-shadow: 0 8px 16px rgba(64, 158, 255, 0.08);
-        
-        .card-action {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
+	/* 悬停效果 */
+	&:hover {
+		border-color: #b3d8ff;
+		transform: translateY(-2px);
+		box-shadow: 0 8px 16px rgba(64, 158, 255, 0.08);
 
-    /* 左侧图标 */
-    .card-icon-wrapper {
-        width: 48px;
-        height: 48px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 16px;
-        flex-shrink: 0;
-        transition: transform 0.3s;
-    }
+		.card-action {
+			opacity: 1;
+			transform: translateX(0);
+		}
+	}
 
-    /* 中间内容 */
-    .card-content {
-        flex: 1;
-        overflow: hidden;
-        
-        .card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 4px;
-            
-            .comp-title {
-                margin: 0;
-                font-size: 15px;
-                font-weight: 600;
-                color: #1f2d3d;
-            }
-            
-            .type-tag {
-                height: 20px;
-                padding: 0 6px;
-                font-size: 10px;
-                margin-left: 8px;
-            }
-        }
+	/* 左侧图标 */
+	.card-icon-wrapper {
+		width: 48px;
+		height: 48px;
+		border-radius: 10px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin-right: 16px;
+		flex-shrink: 0;
+		transition: transform 0.3s;
+	}
 
-        .comp-desc {
-            margin: 0;
-            font-size: 12px;
-            color: #909399;
-            line-height: 1.4;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-    }
+	/* 中间内容 */
+	.card-content {
+		flex: 1;
+		overflow: hidden;
 
-    /* 右侧动作 */
-    .card-action {
-        width: 30px;
-        display: flex;
-        justify-content: center;
-        opacity: 0.5;
-        transition: all 0.2s;
-        
-        .el-button {
-            font-size: 16px;
-        }
-    }
+		.card-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 4px;
+
+			.comp-title {
+				margin: 0;
+				font-size: 15px;
+				font-weight: 600;
+				color: #1f2d3d;
+			}
+
+			.type-tag {
+				height: 20px;
+				padding: 0 6px;
+				font-size: 10px;
+				margin-left: 8px;
+			}
+		}
+
+		.comp-desc {
+			margin: 0;
+			font-size: 12px;
+			color: #909399;
+			line-height: 1.4;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+	}
+
+	/* 右侧动作 */
+	.card-action {
+		width: 30px;
+		display: flex;
+		justify-content: center;
+		opacity: 0.5;
+		transition: all 0.2s;
+
+		.el-button {
+			font-size: 16px;
+		}
+	}
 }
 
 
 /* --- 右侧结构树样式优化 --- */
 
 .structure-tree {
-    background: transparent;
-    padding: 6px;
-    
-    /* 调整 Element Plus 树节点的默认样式 */
-    :deep(.el-tree-node__content) {
-        height: 36px; /*稍微增高一点，方便操作 */
-        border-radius: 4px;
-        margin-bottom: 2px;
-        
-        &:hover {
-            background-color: #f0f7ff;
-        }
-    }
+	background: transparent;
+	padding: 6px;
+
+	/* 调整 Element Plus 树节点的默认样式 */
+	:deep(.el-tree-node__content) {
+		height: 36px;
+		/*稍微增高一点，方便操作 */
+		border-radius: 4px;
+		margin-bottom: 2px;
+
+		&:hover {
+			background-color: #f0f7ff;
+		}
+	}
 }
 
 .custom-tree-node {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 13px;
-    padding-right: 8px;
-    overflow: hidden; /* 防止内容撑开 */
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	font-size: 13px;
+	padding-right: 8px;
+	overflow: hidden;
+	/* 防止内容撑开 */
 
-    /* 左侧内容区 */
-    .node-content {
-        display: flex;
-        align-items: center;
-        overflow: hidden;
-        
-        .node-icon {
-            margin-right: 6px;
-            font-size: 14px;
-            
-            &.icon-container { color: #409eff; } /* 蓝色文件夹 */
-            &.icon-layout { color: #e6a23c; }    /* 橙色布局 */
-            &.icon-content { color: #67c23a; }   /* 绿色内容 */
-        }
-        
-        .node-label {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            color: #606266;
-        }
-        
-        .mini-tag {
-            margin-left: 6px;
-            height: 16px;
-            line-height: 14px;
-            padding: 0 4px;
-            font-size: 10px;
-        }
-    }
+	/* 左侧内容区 */
+	.node-content {
+		display: flex;
+		align-items: center;
+		overflow: hidden;
 
-    /* 右侧操作区 */
-    .node-actions {
-        display: none; /* 默认隐藏 */
-        align-items: center;
-        gap: 4px;
-        background: #f0f7ff; /* 遮住下面的文字防止重叠，配合 hover */
-        padding-left: 8px;
-        
-        /* 调整按钮样式 */
-        .el-button {
-            padding: 4px 0;
-            height: auto;
-            font-size: 12px;
-        }
-    }
+		.node-icon {
+			margin-right: 6px;
+			font-size: 14px;
 
-    /* 悬停时显示操作按钮 */
-    &:hover .node-actions {
-        display: flex;
-    }
+			&.icon-container {
+				color: #409eff;
+			}
+
+			/* 蓝色文件夹 */
+			&.icon-layout {
+				color: #e6a23c;
+			}
+
+			/* 橙色布局 */
+			&.icon-content {
+				color: #67c23a;
+			}
+
+			/* 绿色内容 */
+		}
+
+		.node-label {
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			color: #606266;
+		}
+
+		.mini-tag {
+			margin-left: 6px;
+			height: 16px;
+			line-height: 14px;
+			padding: 0 4px;
+			font-size: 10px;
+		}
+	}
+
+	/* 右侧操作区 */
+	.node-actions {
+		display: none;
+		/* 默认隐藏 */
+		align-items: center;
+		gap: 4px;
+		background: #f0f7ff;
+		/* 遮住下面的文字防止重叠，配合 hover */
+		padding-left: 8px;
+
+		/* 调整按钮样式 */
+		.el-button {
+			padding: 4px 0;
+			height: auto;
+			font-size: 12px;
+		}
+	}
+
+	/* 悬停时显示操作按钮 */
+	&:hover .node-actions {
+		display: flex;
+	}
 }
 
 /* 选中节点的样式 */
 :deep(.el-tree-node.is-current > .el-tree-node__content) {
-    background-color: #ecf5ff;
-    
-    .node-label {
-        color: #409eff;
-        font-weight: 500;
-    }
+	background-color: #ecf5ff;
+
+	.node-label {
+		color: #409eff;
+		font-weight: 500;
+	}
+}
+
+/** create tab */
+.form-tab-content {
+	/* 1. Set a fixed height */
+	height: 400px;
+	/* Adjust based on your design preferences */
+
+	/* 2. Enable scrolling for long content */
+	overflow-y: auto;
+	overflow-x: hidden;
+
+	/* 3. Add some padding so content doesn't touch the scrollbar */
+	padding-right: 10px;
+	padding-bottom: 10px;
 }
 </style>
