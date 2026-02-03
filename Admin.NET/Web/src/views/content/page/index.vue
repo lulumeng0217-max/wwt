@@ -158,13 +158,11 @@
 											<!-- 只有容器(Kind=10)或特殊布局才能添加子级 -->
 											<!-- 注意：你需要确保你的 data 里包含 kind 属性 -->
 											<el-button v-if="isContainer(data)" link type="primary" size="small"
-												@click.stop="handleAppend(data)" title="Append Child">
-												Append
+												@click.stop="handleAppend(data)" title="Append Child"> Append
 											</el-button>
 
 											<el-button link type="danger" size="small"
-												@click.stop="removeComponent(data.id)" title="Delete">
-												Delete
+												@click.stop="removeComponent(data.id)" title="Delete"> Delete
 											</el-button>
 										</div>
 									</div>
@@ -240,7 +238,7 @@
 
 								<el-col :span="24" v-if="sourceType === 'template'">
 									<div class="tpl-select-box">
-										<el-form-item label="Template" style="margin-bottom: 0;">
+										<el-form-item label="Template" style="margin-bottom: 0">
 											<el-select v-model="formData.templateId" placeholder="Select a template"
 												class="w-100">
 												<el-option v-for="t in templateList" :key="t.id" :label="t.title"
@@ -312,7 +310,6 @@
 		<el-drawer v-model="componentDrawerVisible" title="Add Component" direction="rtl" size="420px"
 			class="component-drawer" destroy-on-close>
 			<div class="drawer-layout">
-
 				<el-divider class="custom-divider" />
 				<!-- 组件列表区域 -->
 				<el-scrollbar class="component-scroll">
@@ -336,8 +333,7 @@
 								</div>
 								<!-- 使用 stripHtml 清洗描述 -->
 								<p class="comp-desc">{{ stripHtml(comp.description || '') || 'No description available'
-									}}
-								</p>
+									}}</p>
 							</div>
 
 							<!-- 右侧加号 -->
@@ -360,7 +356,7 @@ import { ElMessage, ElTree } from 'element-plus';
 import { getAPI } from '/@/utils/axios-utils';
 import { CmsComponentTypeApi, CmsComponentApi, CmsPageApi } from '/@/api-services';
 import { CmsComponentDto, CmsPageOutput, AddCmsPageInput, CmsComponentTypeOutput, AddCmsComponentInput, ComponentKindEnum } from '/@/api-services/models';
-import { nanoid } from 'nanoid'
+import { nanoid } from 'nanoid';
 import { id } from 'element-plus/es/locale';
 // ---------------- 接口扩展 ----------------
 // 为了适配 UI 树形结构，扩展定义
@@ -445,18 +441,20 @@ const pageTreeData = computed(() => {
 	// 深拷贝避免修改原数组
 	const pages = JSON.parse(JSON.stringify(state.pageList)) as CmsPageTreeItem[];
 	// 添加 pid 默认为 0 如果没有的话
-	pages.forEach(p => { if (p.pid === undefined) p.pid = 0; });
+	pages.forEach((p) => {
+		if (p.pid === undefined) p.pid = 0;
+	});
 	return listToTree(pages);
 });
 
 // 2. 组件树形结构生成 (用于右侧展示和选择父级)
 const componentTreeDisplay = computed(() => {
 	// 过滤掉已删除的
-	const activeBlocks = previewBlocks.value.filter(b => !b.isDeleted);
+	const activeBlocks = previewBlocks.value.filter((b) => !b.isDeleted);
 	console.log('Active Blocks for Tree:', activeBlocks);
 	// 构建树
 	return listToTree(
-		activeBlocks.map(b => ({
+		activeBlocks.map((b) => ({
 			id: b.id,
 			label: b.component,
 			icon: getComponentIcon(b.componentKind),
@@ -546,11 +544,34 @@ const fetchPageList = async () => {
 
 const fetchComponentTypes = async () => {
 	const res = await getAPI(CmsComponentTypeApi).apiCmsComponentTypePagePost({ page: 1, pageSize: 999 });
+	res.data.result?.items?.forEach((comp) => {
+		if (comp.defaultProps) {
+			try {
+				comp.defaultProps = JSON.parse(comp.defaultProps);
+			} catch {
+				comp.defaultProps = null;
+			}
+		} else {
+			comp.defaultProps = null;
+		}
+	});
 	availableComponentTypes.value = res.data.result?.items || [];
 };
 
 const fetchComponents = async (pageId: number) => {
 	const res = await getAPI(CmsComponentApi).apiWWTCMSCmsComponentGetCmsComponentPageIdGet(pageId);
+	// root 处理 props
+	res.data.result?.forEach((comp) => {
+		if (comp.props) {
+			try {
+				comp.props = JSON.parse(comp.props);
+			} catch {
+				comp.props = null;
+			}
+		} else {
+			comp.props = null;
+		}
+	});
 	return res.data.result || [];
 };
 
@@ -575,14 +596,14 @@ const EditPage = async (id: number) => {
 	}
 	Object.assign(formData, res.data.result);
 	dialogVisible.value = true;
-}
+};
 
 const submitCreate = async () => {
 	if (!formRef.value) return;
 	await formRef.value.validate(async (valid) => {
 		if (valid) {
 			try {
-				let res:any = null;
+				let res: any = null;
 				// 调用 API
 				if (formData.id) {
 					res = await getAPI(CmsPageApi).apiCmsPageUpdatePost(formData);
@@ -597,7 +618,7 @@ const submitCreate = async () => {
 				// 选中新页面并开始预览
 				if (res.data.result) {
 					// 查找新页面的对象
-					const newPage = state.pageList.find(p => p.id === res.data.result);
+					const newPage = state.pageList.find((p) => p.id === res.data.result);
 					if (newPage) handlePageSelect(newPage);
 				}
 			} catch (err) {
@@ -615,7 +636,7 @@ const handlePageSelect = async (page: CmsPageOutput) => {
 	// 加载组件数据
 	const dbComponents = await fetchComponents(page.id!);
 	// 转换为 PreviewBlock 格式
-	const blocks: PreviewBlock[] = dbComponents.map(c => ({
+	const blocks: PreviewBlock[] = dbComponents.map((c) => ({
 		id: c.id?.toString() || '',
 		originalId: c.id,
 		component: c.cmsComponentType?.name || 'Unknown',
@@ -627,7 +648,7 @@ const handlePageSelect = async (page: CmsPageOutput) => {
 		styles: c.styles ? JSON.parse(c.styles) : {},
 		isNew: false,
 		isDeleted: false,
-		isModified: false
+		isModified: false,
 	}));
 
 	previewBlocks.value = blocks.sort((a, b) => a.sortOrder - b.sortOrder);
@@ -637,13 +658,16 @@ const handlePageSelect = async (page: CmsPageOutput) => {
 // 辅助：解析 JSON
 const parseProps = (str: string | null | undefined) => {
 	if (!str) return {};
-	try { return JSON.parse(str); } catch { return {}; }
+	try {
+		return JSON.parse(str);
+	} catch {
+		return {};
+	}
 };
 
-// 4. 修改原本的打开抽屉方法 (顶部的大按钮)
-// 如果没传参数，默认添加到根 (0)
+
 const openComponentDrawer = (parentId: string = '0') => {
-	targetParentId.value = "0";
+	targetParentId.value = '0';
 	componentDrawerVisible.value = true;
 };
 
@@ -659,7 +683,7 @@ const addComponent = (type: CmsComponentTypeOutput) => {
 		isNew: true,
 		isDeleted: false,
 		isModified: false,
-		styles: {}
+		styles: {},
 	};
 
 	previewBlocks.value.push(newBlock);
@@ -669,7 +693,7 @@ const addComponent = (type: CmsComponentTypeOutput) => {
 };
 
 const removeComponent = (id: string) => {
-	const idx = previewBlocks.value.findIndex(b => b.id === id);
+	const idx = previewBlocks.value.findIndex((b) => b.id === id);
 	if (idx === -1) return;
 
 	const block = previewBlocks.value[idx];
@@ -702,7 +726,7 @@ const onIframeLoad = () => {
 
 export interface CMSComponentBlock {
 	id: string;
-	type: "GlobalAlertBar" | "TextFeatureSection" | "OffersSection" | string; // 扩展为 string 以兼容未来新组件
+	type: 'GlobalAlertBar' | 'TextFeatureSection' | 'OffersSection' | string; // 扩展为 string 以兼容未来新组件
 	sort_order: number;
 	is_visible: boolean;
 	// UnoCSS 类名字符串 (e.g. "mt-4 hidden md:flex")
@@ -714,37 +738,48 @@ export interface CMSComponentBlock {
 	styles?: Record<string, any>;
 	children?: CMSComponentBlock[];
 }
+// 辅助函数：将 PreviewBlock 转换为 CMSComponentBlock
+const convertToCMSComponentBlock = (block: PreviewBlock): CMSComponentBlock => {
+	return {
+		id: block.id,
+		type: block.component,
+		sort_order: block.sortOrder,
+		is_visible: true, // 默认为可见，可以根据业务需要调整
+		class: block.props?.class || '',
+		props: block.props || {},
+		styles: block.styles || {},
+		children: block.children?.map((child) => convertToCMSComponentBlock(child as PreviewBlock)),
+	};
+};
+
 // 修改 sendPreviewToIframe 方法
 const sendPreviewToIframe = () => {
 	const iframe = previewIframe.value;
 	if (!iframe?.contentWindow || !currentPreviewPage.value) return;
 
-	// 1. 准备数据
-	const activeBlocks = previewBlocks.value.filter(b => !b.isDeleted);
+	// 1. 准备数据 - 过滤掉已删除的
+	const activeBlocks = previewBlocks.value.filter((b) => !b.isDeleted);
 
-	// 2. 组装消息对象
-	// 注意：这里我们构建一个干净的对象，不直接传 Vue 的 ref
+	// 2. 构建树形结构并转换为 CMSComponentBlock 格式
+	// 先给每个 block 添加 children 属性，用于 listToTree
+	const blocksWithChildren = activeBlocks.map((b) => ({ ...b, children: [] as PreviewBlock[] }));
+	const treeBlocks = listToTree(blocksWithChildren);
+    console.log('Tree Blocks:', treeBlocks);
+	// 3. 转换为 CMSComponentBlock 树
+	const cmsBlocks = treeBlocks.map((b) => convertToCMSComponentBlock(b));
+ console.log('Tree cmsBlocks:', cmsBlocks);
+	// 4. 组装消息对象
 	const messageData = {
 		pageInfo: {
 			id: currentPreviewPage.value.id,
 			requestPath: currentPreviewPage.value.requestPath,
 			title: currentPreviewPage.value.title,
-			subTitle: currentPreviewPage.value.subTitle
+			subTitle: currentPreviewPage.value.subTitle,
 		},
-		blocks: activeBlocks.map(b => {
-			// id: b.id,
-			// originalId: b.originalId,
-			// pid: b.pid, // 确保传了 PID
-			// component: b.component,
-			// // 重点：props 里面可能包含 Vue 响应式数据，需要解包
-			// props: b.props,
-			// sortOrder: b.sortOrder,
-			// kind: b.componentKind // 确保传了 kind
-		})
+		blocks: cmsBlocks,
 	};
 
-	// 3. 【核心修复】使用 JSON 序列化再反序列化，彻底去除 Vue Proxy 和不可克隆对象
-	// 这一步会移除所有函数、Symbol 和 Vue 的内部引用，只保留纯数据
+	// 5. 【核心修复】使用 JSON 序列化再反序列化，彻底去除 Vue Proxy 和不可克隆对象
 	const cleanData = JSON.parse(JSON.stringify(messageData));
 
 	console.log('Sending clean data:', cleanData);
@@ -752,7 +787,7 @@ const sendPreviewToIframe = () => {
 	iframe.contentWindow.postMessage(
 		{
 			type: 'CMS_PREVIEW_UPDATE',
-			data: cleanData, // 发送清洗后的数据
+			data: cleanData,
 		},
 		'*'
 	);
@@ -766,12 +801,13 @@ const onIframeMessage = (e: MessageEvent) => {
 const saveComponents = async () => {
 	if (!currentPreviewPage.value) return;
 	isSaving.value = true;
+	console.log('Saving components:', previewBlocks.value);
 	try {
-		const newBlocks = previewBlocks.value.filter(b => b.isNew && !b.isDeleted);
-
+		const newBlocks = previewBlocks.value.filter((b) =>!b.isDeleted);
+		console.log('Saving newBlocks:', newBlocks);
 		if (newBlocks.length > 0) {
 			// 构造 componentList 数组
-			const componentList = newBlocks.map(b => ({
+			const componentList = newBlocks.map((b) => ({
 				id: b.id, // 如果有原始 ID 则传递
 				componentTypeId: b.componentTypeId,
 				pid: b.pid, // 确保 PID 是数字
@@ -783,7 +819,7 @@ const saveComponents = async () => {
 
 			const batchInput = {
 				pageId: currentPreviewPage.value!.id,
-				componentList: componentList
+				componentList: componentList,
 			};
 
 			// 发送请求
@@ -793,7 +829,6 @@ const saveComponents = async () => {
 		ElMessage.success('Saved successfully');
 		// 3. 刷新页面数据，重新获取 ID
 		await handlePageSelect(currentPreviewPage.value);
-
 	} catch (e) {
 		ElMessage.error('Save failed');
 		console.error(e);
@@ -806,12 +841,12 @@ const saveComponents = async () => {
 // 1. 清洗 HTML 标签，只保留文本
 const stripHtml = (html?: string) => {
 	if (!html) return '';
-	const tmp = document.createElement("DIV");
+	const tmp = document.createElement('DIV');
 	tmp.innerHTML = html;
-	let text = tmp.textContent || tmp.innerText || "";
+	let text = tmp.textContent || tmp.innerText || '';
 	// 截取前50个字符，避免太长
 	return text.length > 50 ? text.substring(0, 50) + '...' : text;
-}
+};
 
 // 2. 根据 Kind 获取更丰富的图标配置
 const getComponentStyle = (kind?: number) => {
@@ -825,13 +860,12 @@ const getComponentStyle = (kind?: number) => {
 	}
 };
 
-
 // ---------------- 新增/修改的方法 ----------------
 // 1. 判断是否为容器 (决定是否显示 Append 按钮)
 //  Kind: 10=Container, 20=Layout, 30=Content
 const isContainer = (data: any) => {
 	// 从 previewBlocks 查找该组件的详细信息以获取 kind
-	const block = previewBlocks.value.find(b => b.id === data.id);
+	const block = previewBlocks.value.find((b) => b.id === data.id);
 	if (block && block.componentKind === ComponentKindEnum.NUMBER_10) return true; // Container
 
 	return false;
@@ -854,8 +888,6 @@ const handleAppend = (data: any) => {
 	targetParentId.value = data.id;
 	componentDrawerVisible.value = true;
 };
-
-
 </script>
 
 <style scoped lang="scss">
@@ -873,7 +905,7 @@ $primary-color: #409eff;
 	width: 100%;
 	background-color: $bg-color;
 	overflow: hidden;
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
 /* --- 左侧面板 --- */
@@ -1380,7 +1412,6 @@ $primary-color: #409eff;
 		}
 	}
 }
-
 
 /* --- 右侧结构树样式优化 --- */
 
